@@ -23,6 +23,7 @@ local REMAP_BLOCKED_APPS = {
   ["com.jetbrains.datagrip"]    = true,
   ["com.jetbrains.clion"]       = true,
   ["com.jetbrains.rustrover"]   = true,
+  ["com.microsoft.VSCode"]      = true,
 }
 
 -- apps where we want to block Ctrl+Cmd+F (fullscreen)  (BUNDLE-IDs)
@@ -37,37 +38,40 @@ local FULLSCREEN_BLOCKED_APPS = {
 
 -- declarative shortcut map
 local SHORTCUTS = {
-  {mods={"ctrl"}, key="c",              sendMods={"cmd"},           keyOut="c"},
-  {mods={"ctrl"}, key="d",              sendMods={"cmd"},           keyOut="d"},
-  {mods={"ctrl"}, key="n",              sendMods={"cmd"},           keyOut="n"},
-  {mods={"ctrl"}, key="v",              sendMods={"cmd"},           keyOut="v"},
-  {mods={"ctrl"}, key="x",              sendMods={"cmd"},           keyOut="x"},
-  {mods={"ctrl"}, key="z",              sendMods={"cmd"},           keyOut="z"},
-  {mods={"ctrl"}, key="a",              sendMods={"cmd"},           keyOut="a"},
-  {mods={"ctrl"}, key="s",              sendMods={"cmd"},           keyOut="s"},
-  {mods={"ctrl"}, key="p",              sendMods={"cmd"},           keyOut="p"},
-  {mods={"ctrl"}, key="f",              sendMods={"cmd"},           keyOut="f"},
-  {mods={"ctrl"}, key="t",              sendMods={"cmd"},           keyOut="t"},
-  {mods={"ctrl"}, key="w",              sendMods={"cmd"},           keyOut="w"},
-  {mods={"ctrl"}, key="return",         sendMods={"cmd"},           keyOut="return"},
-  {mods={"ctrl"}, key="enter",          sendMods={"cmd"},           keyOut="return"},
-  {mods={"ctrl"}, key="y",              sendMods={"cmd", "shift"},  keyOut="z"},
-  {mods={"ctrl"}, key="forwarddelete",  sendMods={"alt"},           keyOut="forwarddelete"},
-  {mods={"ctrl"}, key="delete",         sendMods={"alt"},           keyOut="delete"},
-  {mods={"ctrl"}, key="r",              sendMods={"cmd"},           keyOut="r"},
-  
-  {mods={"ctrl", "shift"}, key="r",     sendMods={"cmd", "shift"},  keyOut="r"},
-  {mods={"ctrl", "shift"}, key="e",     sendMods={"cmd", "alt"},    keyOut="e"},
-  {mods={"ctrl", "shift"}, key="c",     sendMods={"cmd", "alt"},    keyOut="c"},
-  {mods={"ctrl", "shift"}, key="k",     sendMods={"cmd", "alt"},    keyOut="k"},
+  {mods={"ctrl"},               key="c",                    sendMods={"cmd"},                 keyOut="c"},
+  {mods={"ctrl"},               key="d",                    sendMods={"cmd"},                 keyOut="d"},
+  {mods={"ctrl"},               key="n",                    sendMods={"cmd"},                 keyOut="n"},
+  {mods={"ctrl"},               key="v",                    sendMods={"cmd"},                 keyOut="v"},
+  {mods={"ctrl"},               key="x",                    sendMods={"cmd"},                 keyOut="x"},
+  {mods={"ctrl"},               key="z",                    sendMods={"cmd"},                 keyOut="z"},
+  {mods={"ctrl"},               key="a",                    sendMods={"cmd"},                 keyOut="a"},
+  {mods={"ctrl"},               key="s",                    sendMods={"cmd"},                 keyOut="s"},
+  {mods={"ctrl"},               key="p",                    sendMods={"cmd"},                 keyOut="p"},
+  {mods={"ctrl"},               key="f",                    sendMods={"cmd"},                 keyOut="f"},
+  {mods={"ctrl"},               key="t",                    sendMods={"cmd"},                 keyOut="t"},
+  {mods={"ctrl"},               key="w",                    sendMods={"cmd"},                 keyOut="w"},
+  {mods={"ctrl"},               key="return",               sendMods={"cmd"},                 keyOut="return"},
+  {mods={"ctrl"},               key="enter",                sendMods={"cmd"},                 keyOut="return"},
+  {mods={"ctrl"},               key="y",                    sendMods={"cmd", "shift"},        keyOut="z"},
+  {mods={"ctrl"},               key="forwarddelete",        sendMods={"alt"},                 keyOut="forwarddelete"},
+  {mods={"ctrl"},               key="delete",               sendMods={"alt"},                 keyOut="delete"},
+  {mods={"ctrl"},               key="r",                    sendMods={"cmd"},                 keyOut="r"},
 
-  {mods={"ctrl"}, scroll="up", sendMods={"cmd"}, keyOut="+"},
-  {mods={"ctrl"}, scroll="down", sendMods={"cmd"}, keyOut="-"},
-}
+  {mods={"ctrl", "shift"},      key="r",                    sendMods={"cmd", "shift"},        keyOut="r"},
+  {mods={"ctrl", "shift"},      key="e",                    sendMods={"cmd", "alt"},          keyOut="e"},
+  {mods={"ctrl", "shift"},      key="c",                    sendMods={"cmd", "alt"},          keyOut="c"},
+  {mods={"ctrl", "shift"},      key="k",                    sendMods={"cmd", "alt"},          keyOut="k"},
 
-local APP_SHORTCUTS = {
-  {mods={"ctrl", "alt"},   key="delete", app="Activity Monitor"},
-  {mods={"ctrl", "shift"}, key="escape", app="Activity Monitor"},
+  {mods={"ctrl"},               scroll="up",                sendMods={"cmd"},                 keyOut="+"},
+  {mods={"ctrl"},               scroll="down",              sendMods={"cmd"},                 keyOut="-"},
+
+  {mods={"ctrl", "alt"},        key="¨",                    sendMods={"alt"},                 keyOut="¨"},
+  {mods={"ctrl", "alt"},        key="down",                 sendMods={"cmd"},                 keyOut="-"},
+}     
+      
+local APP_SHORTCUTS = {     
+  {mods={"ctrl", "alt"},        key="delete", app="Activity Monitor"},
+  {mods={"ctrl", "shift"},      key="escape", app="Activity Monitor"},
 }
 
 ------------------------------------------------------------
@@ -313,7 +317,6 @@ hs_hotkey.bind({"cmd", "alt", "ctrl"}, "T", function()
     local bundleID = fa and fa:bundleID() or "nil"
     local currentLayout = hs_keycodes.currentLayout()
     local currentSourceID = hs_keycodes.currentSourceID()
-
 
     print("--- DIAGNOSTIC INFO ---")
     print(string.format("Frontmost App: %s (%s)", appName, bundleID))
