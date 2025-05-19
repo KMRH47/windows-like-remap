@@ -43,8 +43,10 @@ local GLOBAL_SHORTCUTS = {
     key = "down",
     action = function(event, eventIsKeyDown, appName, bundleID)
       if eventIsKeyDown then -- Only act on key down
-        if DEBUG then logKeyEvent(event, "remapTap: GLOBAL Action: Minimize Window (Cmd+Shift+Down -> Cmd+M)", appName,
-            bundleID) end
+        if DEBUG then
+          logKeyEvent(event, "remapTap: GLOBAL Action: Minimize Window (Cmd+Shift+Down -> Cmd+M)", appName,
+            bundleID)
+        end
         hs_eventtap.keyStroke({ "cmd" }, "m", 0)
       end
       -- The event is consumed by returning true in the main remapTap loop after this action is called.
@@ -69,42 +71,42 @@ local GLOBAL_SHORTCUTS = {
 
 -- declarative shortcut map (general remaps)
 local SHORTCUTS = {
-  { mods = { "ctrl" },      key = "c",           sendMods = { "cmd" },      keyOut = "c" },
-  { mods = { "ctrl" },      key = "d",           sendMods = { "cmd" },      keyOut = "d" },
-  { mods = { "ctrl" },      key = "n",           sendMods = { "cmd" },      keyOut = "n" },
-  { mods = { "ctrl" },      key = "v",           sendMods = { "cmd" },      keyOut = "v" },
-  { mods = { "ctrl" },      key = "x",           sendMods = { "cmd" },      keyOut = "x" },
-  { mods = { "ctrl" },      key = "z",           sendMods = { "cmd" },      keyOut = "z" },
-  { mods = { "ctrl" },      key = "a",           sendMods = { "cmd" },      keyOut = "a" },
-  { mods = { "ctrl" },      key = "s",           sendMods = { "cmd" },      keyOut = "s" },
-  { mods = { "ctrl" },      key = "p",           sendMods = { "cmd" },      keyOut = "p" },
-  { mods = { "ctrl" },      key = "f",           sendMods = { "cmd" },      keyOut = "f" },
-  { mods = { "ctrl" },      key = "t",           sendMods = { "cmd" },      keyOut = "t" },
-  { mods = { "ctrl" },      key = "w",           sendMods = { "cmd" },      keyOut = "w" },
-  { mods = { "ctrl" },      key = "return",      sendMods = { "cmd" },      keyOut = "return" },
-  { mods = { "ctrl" },      key = "enter",       sendMods = { "cmd" },      keyOut = "return" },                -- 'enter' is often the same as 'return'
-  { mods = { "ctrl" },      key = "y",           sendMods = { "cmd", "shift" }, keyOut = "z" },                 -- Redo
-  { mods = { "ctrl" },      key = "forwarddelete", sendMods = { "alt" },    keyOut = "forwarddelete" },
-  { mods = { "ctrl" },      key = "delete",      sendMods = { "alt" },      keyOut = "delete" },
-  { mods = { "ctrl" },      key = "r",           sendMods = { "cmd" },      keyOut = "r" },
+  { mods = { "ctrl" },          key = "c",             sendMods = { "cmd" },          keyOut = "c" },
+  { mods = { "ctrl" },          key = "d",             sendMods = { "cmd" },          keyOut = "d" },
+  { mods = { "ctrl" },          key = "n",             sendMods = { "cmd" },          keyOut = "n" },
+  { mods = { "ctrl" },          key = "v",             sendMods = { "cmd" },          keyOut = "v" },
+  { mods = { "ctrl" },          key = "x",             sendMods = { "cmd" },          keyOut = "x" },
+  { mods = { "ctrl" },          key = "z",             sendMods = { "cmd" },          keyOut = "z" },
+  { mods = { "ctrl" },          key = "a",             sendMods = { "cmd" },          keyOut = "a" },
+  { mods = { "ctrl" },          key = "s",             sendMods = { "cmd" },          keyOut = "s" },
+  { mods = { "ctrl" },          key = "p",             sendMods = { "cmd" },          keyOut = "p" },
+  { mods = { "ctrl" },          key = "f",             sendMods = { "cmd" },          keyOut = "f" },
+  { mods = { "ctrl" },          key = "t",             sendMods = { "cmd" },          keyOut = "t" },
+  { mods = { "ctrl" },          key = "w",             sendMods = { "cmd" },          keyOut = "w" },
+  { mods = { "ctrl" },          key = "return",        sendMods = { "cmd" },          keyOut = "return" },
+  { mods = { "ctrl" },          key = "enter",         sendMods = { "cmd" },          keyOut = "return" }, -- 'enter' is often the same as 'return'
+  { mods = { "ctrl" },          key = "y",             sendMods = { "cmd", "shift" }, keyOut = "z" }, -- Redo
+  { mods = { "ctrl" },          key = "forwarddelete", sendMods = { "alt" },          keyOut = "forwarddelete" },
+  { mods = { "ctrl" },          key = "delete",        sendMods = { "alt" },          keyOut = "delete" },
+  { mods = { "ctrl" },          key = "r",             sendMods = { "cmd" },          keyOut = "r" },
 
-  { mods = { "ctrl", "shift" }, key = "r",       sendMods = { "cmd", "shift" }, keyOut = "r" },
-  { mods = { "ctrl", "shift" }, key = "e",       sendMods = { "cmd", "alt" }, keyOut = "e" },
-  { mods = { "ctrl", "shift" }, key = "c",       sendMods = { "cmd", "alt" }, keyOut = "c" },
-  { mods = { "ctrl", "shift" }, key = "k",       sendMods = { "cmd", "alt" }, keyOut = "k" },
+  { mods = { "ctrl", "shift" }, key = "r",             sendMods = { "cmd", "shift" }, keyOut = "r" },
+  { mods = { "ctrl", "shift" }, key = "e",             sendMods = { "cmd", "alt" },   keyOut = "e" },
+  { mods = { "ctrl", "shift" }, key = "c",             sendMods = { "cmd", "alt" },   keyOut = "c" },
+  { mods = { "ctrl", "shift" }, key = "k",             sendMods = { "cmd", "alt" },   keyOut = "k" },
 
-  { mods = { "ctrl" },      scroll = "up",       sendMods = { "cmd" },      keyOut = "+" },                -- Zoom in
-  { mods = { "ctrl" },      scroll = "down",     sendMods = { "cmd" },      keyOut = "-" },                -- Zoom out
+  { mods = { "ctrl" },          scroll = "up",         sendMods = { "cmd" },          keyOut = "+" }, -- Zoom in
+  { mods = { "ctrl" },          scroll = "down",       sendMods = { "cmd" },          keyOut = "-" }, -- Zoom out
 
-  { mods = { "ctrl", "alt" }, key = "¨",         sendMods = { "alt" },      keyOut = "¨" },                -- Example, adjust key as needed for your layout
-  { mods = { "ctrl", "alt" }, key = "down",      sendMods = { "cmd" },      keyOut = "-" },                -- Example, might conflict with scroll
+  { mods = { "ctrl", "alt" },   key = "¨",             sendMods = { "alt" },          keyOut = "¨" }, -- Example, adjust key as needed for your layout
+  { mods = { "ctrl", "alt" },   key = "down",          sendMods = { "cmd" },          keyOut = "-" }, -- Example, might conflict with scroll
 
-  { mods = { "ctrl", "shift" }, key = "b",       sendMods = { "cmd", "shift" }, keyOut = "b" },
+  { mods = { "ctrl", "shift" }, key = "b",             sendMods = { "cmd", "shift" }, keyOut = "b" },
 }
 
 -- app specific launchers
 local APP_SHORTCUTS = {
-  { mods = { "ctrl", "alt" }, key = "delete", app = "Activity Monitor" },
+  { mods = { "ctrl", "alt" },   key = "delete", app = "Activity Monitor" },
   { mods = { "ctrl", "shift" }, key = "escape", app = "Activity Monitor" },
 }
 
@@ -224,8 +226,10 @@ hs_hotkey.bind({ "ctrl", "cmd" }, "F", function()
     hs_alert.show("Fullscreen disabled 🚫 for " .. appName)
     if DEBUG then keyEventsLogger:d("Fullscreen blocked for: " .. appName .. " (" .. bundleID .. ")") end
   else
-    if DEBUG then keyEventsLogger:d("Fullscreen allowed for: " ..
-      appName .. " (" .. bundleID .. "), sending native Ctrl+Cmd+F") end
+    if DEBUG then
+      keyEventsLogger:d("Fullscreen allowed for: " ..
+        appName .. " (" .. bundleID .. "), sending native Ctrl+Cmd+F")
+    end
     hs_eventtap.keyStroke({ "ctrl", "cmd" }, "F")
   end
 end)
@@ -258,7 +262,7 @@ _G.myActiveTaps.remapTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown, hs
           elseif gs.sendMods and gs.keyOut then
             if DEBUG then
               local desc = gs.description or
-              (table.concat(gs.mods, "+") .. "+" .. gs.key .. " -> " .. table.concat(gs.sendMods, "+") .. "+" .. gs.keyOut)
+                  (table.concat(gs.mods, "+") .. "+" .. gs.key .. " -> " .. table.concat(gs.sendMods, "+") .. "+" .. gs.keyOut)
               logKeyEvent(e, "remapTap: GLOBAL Remap: " .. desc, appName, bundleID)
             end
             hs_eventtap.event.newKeyEvent(gs.sendMods, gs.keyOut, eventIsKeyDown):post()
@@ -270,16 +274,20 @@ _G.myActiveTaps.remapTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown, hs
 
     -- 2. Check if remapping is blocked for the current application
     if isAppBlocked(REMAP_BLOCKED_APPS, bundleID) then
-      if DEBUG then keyEventsLogger:d("remapTap: Event in REMAP_BLOCKED_APP, passing through. App: " ..
-        appName .. " (" .. bundleID .. ")") end
+      if DEBUG then
+        keyEventsLogger:d("remapTap: Event in REMAP_BLOCKED_APP, passing through. App: " ..
+          appName .. " (" .. bundleID .. ")")
+      end
       return false -- Pass through: Do not remap for this app
     end
 
     -- If key is not mapped (e.g., special media keys not in hs_keycodes.map), pass through
     -- (unless a GLOBAL_SHORTCUT was already matched, possibly one not relying on `key`)
     if not key then
-      if DEBUG then logKeyEvent(e, "remapTap: Unmapped key (keyCode: " .. keyCode .. "), passing through", appName,
-          bundleID) end
+      if DEBUG then
+        logKeyEvent(e, "remapTap: Unmapped key (keyCode: " .. keyCode .. "), passing through", appName,
+          bundleID)
+      end
       return false
     end
 
@@ -294,7 +302,7 @@ _G.myActiveTaps.remapTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown, hs
       if r.key and flagsEqual(flags, r.mods) and key == r.key then
         if DEBUG then
           local desc = r.description or
-          (table.concat(r.mods, "+") .. "+" .. r.key .. " -> " .. table.concat(r.sendMods, "+") .. "+" .. r.keyOut)
+              (table.concat(r.mods, "+") .. "+" .. r.key .. " -> " .. table.concat(r.sendMods, "+") .. "+" .. r.keyOut)
           logKeyEvent(e, "remapTap: Remap (SHORTCUTS): " .. desc, appName, bundleID)
         end
         hs_eventtap.event.newKeyEvent(r.sendMods, r.keyOut, eventIsKeyDown):post()
@@ -315,8 +323,10 @@ _G.myActiveTaps.scrollTap = hs_eventtap.new({ hs_eventtap.event.types.scrollWhee
   if DEBUG then keyEventsLogger:d("scrollTap Event Received. App: " .. appName .. " (" .. bundleID .. ")") end
 
   if isAppBlocked(REMAP_BLOCKED_APPS, bundleID) then
-    if DEBUG then keyEventsLogger:d("scrollTap: Scroll in REMAP_BLOCKED_APP, passing through. App: " ..
-      appName .. " (" .. bundleID .. ")") end
+    if DEBUG then
+      keyEventsLogger:d("scrollTap: Scroll in REMAP_BLOCKED_APP, passing through. App: " ..
+        appName .. " (" .. bundleID .. ")")
+    end
     return false
   end
 
@@ -328,11 +338,13 @@ _G.myActiveTaps.scrollTap = hs_eventtap.new({ hs_eventtap.event.types.scrollWhee
     if scrollDirection then
       for _, shortcut in ipairs(SHORTCUTS) do -- Using SHORTCUTS table for scroll definitions
         if shortcut.scroll and shortcut.scroll == scrollDirection and flagsEqual(flags, shortcut.mods or {}) then
-          if DEBUG then keyEventsLogger:d("scrollTap: Scroll remap: Ctrl+Scroll" ..
-            scrollDirection ..
-            " -> " ..
-            table.concat(shortcut.sendMods, "+") ..
-            "+" .. shortcut.keyOut .. ". App: " .. appName .. " (" .. bundleID .. ")") end
+          if DEBUG then
+            keyEventsLogger:d("scrollTap: Scroll remap: Ctrl+Scroll" ..
+              scrollDirection ..
+              " -> " ..
+              table.concat(shortcut.sendMods, "+") ..
+              "+" .. shortcut.keyOut .. ". App: " .. appName .. " (" .. bundleID .. ")")
+          end
           if shortcut.sendMods and shortcut.keyOut then
             hs_eventtap.keyStroke(shortcut.sendMods, shortcut.keyOut, 0) -- keyStroke for zoom is usually fine
           elseif shortcut.action then
@@ -344,8 +356,10 @@ _G.myActiveTaps.scrollTap = hs_eventtap.new({ hs_eventtap.event.types.scrollWhee
     end
   end
 
-  if DEBUG then keyEventsLogger:d("scrollTap: No scroll remap matched, passing through. App: " ..
-    appName .. " (" .. bundleID .. ")") end
+  if DEBUG then
+    keyEventsLogger:d("scrollTap: No scroll remap matched, passing through. App: " ..
+      appName .. " (" .. bundleID .. ")")
+  end
   return false
 end)
 
@@ -385,7 +399,7 @@ hs_hotkey.bind({ "cmd", "alt", "ctrl" }, "T", function()
   print(string.format("DEBUG flag: %s", tostring(DEBUG)))
   print("Tap Statuses:")
   for tapName, tapObj in pairs(_G.myActiveTaps) do
-    if type(tapObj) == "table" and tapObj.running then     -- Check if it's a tap object
+    if type(tapObj) == "table" and tapObj.running then -- Check if it's a tap object
       print(string.format("  %s: %s", tapName, tapObj:running() and "RUNNING" or "STOPPED"))
     end
   end
