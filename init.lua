@@ -67,6 +67,8 @@ local SHORTCUTS = {
 
   {mods={"ctrl", "alt"},        key="¨",                    sendMods={"alt"},                 keyOut="¨"},
   {mods={"ctrl", "alt"},        key="down",                 sendMods={"cmd"},                 keyOut="-"},
+
+  {mods={"ctrl", "shift"},      key="b",                    sendMods={"cmd", "shift"},        keyOut="b"},
 }     
       
 local APP_SHORTCUTS = {     
