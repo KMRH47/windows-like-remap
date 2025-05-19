@@ -53,20 +53,6 @@ local GLOBAL_SHORTCUTS = {
     end,
     description = "Minimize Window (Cmd+Shift+Down -> Cmd+M)"
   },
-  {
-    mods = { "ctrl" },
-    key = "left",
-    sendMods = { "alt" },
-    keyOut = "left",
-    description = "Ctrl+Left -> Alt+Left (Word Left)"
-  },
-  {
-    mods = { "ctrl" },
-    key = "right",
-    sendMods = { "alt" },
-    keyOut = "right",
-    description = "Ctrl+Right -> Alt+Right (Word Right)"
-  },
 }
 
 -- declarative shortcut map (general remaps)
