@@ -43,7 +43,8 @@ local GLOBAL_SHORTCUTS = {
     key = "down",
     action = function(event, eventIsKeyDown, appName, bundleID)
       if eventIsKeyDown then -- Only act on key down
-        logKeyEvent(event, "remapTap: GLOBAL Action: Minimize Window (Cmd+Shift+Down -> Cmd+M)", appName, bundleID)
+        if DEBUG then logKeyEvent(event, "remapTap: GLOBAL Action: Minimize Window (Cmd+Shift+Down -> Cmd+M)", appName,
+            bundleID) end
         hs_eventtap.keyStroke({ "cmd" }, "m", 0)
       end
       -- The event is consumed by returning true in the main remapTap loop after this action is called.
@@ -110,17 +111,12 @@ local APP_SHORTCUTS = {
 ------------------------------------------------------------
 --  DEBUG LOGGER  -----------------------------------------
 ------------------------------------------------------------
-local DEBUG = true -- Set to true for debug output, false to disable
-
-local keyEventsLogger
-if DEBUG then
-  keyEventsLogger = hs_logger.new('keyEvents', 'debug')
-else
-  -- Provide a noop object, so calls don't error
-  keyEventsLogger = { d = function() end }
-end
+local DEBUG = true -- IMPORTANT: Keep true for now (as per your comment)
+local keyEventsLogger = hs_logger.new('keyEvents', 'debug')
 
 local function logKeyEvent(e, message, appName, bundleID)
+  if not DEBUG then return end
+
   local flags = e:getFlags()
   local keyCode = e:getKeyCode()
   local keyStr = hs_keycodes.map[keyCode] or "UNMAPPED:" .. tostring(keyCode)
@@ -166,7 +162,7 @@ local function launchShortcut(flags, eventKey, isKeyDown, appName, bundleID, ori
   for _, s in ipairs(APP_SHORTCUTS) do
     -- s.key is a string like "delete" or "escape"
     if s.key and flagsEqual(flags, s.mods) and eventKey == s.key then
-      logKeyEvent(originalEvent, "remapTap: Launching app shortcut: " .. s.app, appName, bundleID)
+      if DEBUG then logKeyEvent(originalEvent, "remapTap: Launching app shortcut: " .. s.app, appName, bundleID) end
       hs_app.launchOrFocus(s.app)
       return true
     end
@@ -184,7 +180,7 @@ _G.myActiveTaps.rightAltTap = hs_eventtap.new({ hs_eventtap.event.types.flagsCha
   local kc = e:getKeyCode()
   if kc == 61 then -- right_option
     rightAltDown = e:getFlags().alt
-    keyEventsLogger:d("Right Alt (Key 61) state changed. rightAltDown: " .. tostring(rightAltDown))
+    if DEBUG then keyEventsLogger:d("Right Alt (Key 61) state changed. rightAltDown: " .. tostring(rightAltDown)) end
   end
   return false -- Do not consume the event
 end)
@@ -201,7 +197,7 @@ _G.myActiveTaps.altGrTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown }, 
   local key = hs_keycodes.map[keyCode]
 
   if key then
-    logKeyEvent(e, "AltGr key down", appName, bundleID)
+    if DEBUG then logKeyEvent(e, "AltGr key down", appName, bundleID) end
     if key == "2" then
       hs_eventtap.keyStroke({ "alt" }, "'", 0) --Produces @ on some layouts with AltGr+2
       return true
@@ -226,9 +222,10 @@ hs_hotkey.bind({ "ctrl", "cmd" }, "F", function()
 
   if isAppBlocked(FULLSCREEN_BLOCKED_APPS, bundleID) then
     hs_alert.show("Fullscreen disabled 🚫 for " .. appName)
-    keyEventsLogger:d("Fullscreen blocked for: " .. appName .. " (" .. bundleID .. ")")
+    if DEBUG then keyEventsLogger:d("Fullscreen blocked for: " .. appName .. " (" .. bundleID .. ")") end
   else
-    keyEventsLogger:d("Fullscreen allowed for: " .. appName .. " (" .. bundleID .. "), sending native Ctrl+Cmd+F")
+    if DEBUG then keyEventsLogger:d("Fullscreen allowed for: " ..
+      appName .. " (" .. bundleID .. "), sending native Ctrl+Cmd+F") end
     hs_eventtap.keyStroke({ "ctrl", "cmd" }, "F")
   end
 end)
@@ -243,7 +240,7 @@ _G.myActiveTaps.remapTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown, hs
     local appName = fa and fa:name() or "N/A"
     local bundleID = fa and fa:bundleID() or "nil"
 
-    logKeyEvent(e, "remapTap Event Received", appName, bundleID)
+    if DEBUG then logKeyEvent(e, "remapTap Event Received", appName, bundleID) end
 
     local flags = e:getFlags()
     local keyCode = e:getKeyCode()
@@ -259,9 +256,11 @@ _G.myActiveTaps.remapTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown, hs
             -- Event is consumed because the key combination matched.
             return true
           elseif gs.sendMods and gs.keyOut then
-            local desc = gs.description or
-            (table.concat(gs.mods, "+") .. "+" .. gs.key .. " -> " .. table.concat(gs.sendMods, "+") .. "+" .. gs.keyOut)
-            logKeyEvent(e, "remapTap: GLOBAL Remap: " .. desc, appName, bundleID)
+            if DEBUG then
+              local desc = gs.description or
+              (table.concat(gs.mods, "+") .. "+" .. gs.key .. " -> " .. table.concat(gs.sendMods, "+") .. "+" .. gs.keyOut)
+              logKeyEvent(e, "remapTap: GLOBAL Remap: " .. desc, appName, bundleID)
+            end
             hs_eventtap.event.newKeyEvent(gs.sendMods, gs.keyOut, eventIsKeyDown):post()
             return true
           end
@@ -271,36 +270,39 @@ _G.myActiveTaps.remapTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown, hs
 
     -- 2. Check if remapping is blocked for the current application
     if isAppBlocked(REMAP_BLOCKED_APPS, bundleID) then
-      keyEventsLogger:d("remapTap: Event in REMAP_BLOCKED_APP, passing through. App: " ..
-      appName .. " (" .. bundleID .. ")")
+      if DEBUG then keyEventsLogger:d("remapTap: Event in REMAP_BLOCKED_APP, passing through. App: " ..
+        appName .. " (" .. bundleID .. ")") end
       return false -- Pass through: Do not remap for this app
     end
 
     -- If key is not mapped (e.g., special media keys not in hs_keycodes.map), pass through
     -- (unless a GLOBAL_SHORTCUT was already matched, possibly one not relying on `key`)
     if not key then
-      logKeyEvent(e, "remapTap: Unmapped key (keyCode: " .. keyCode .. "), passing through", appName, bundleID)
+      if DEBUG then logKeyEvent(e, "remapTap: Unmapped key (keyCode: " .. keyCode .. "), passing through", appName,
+          bundleID) end
       return false
     end
 
     -- 3. Check for APP_SHORTCUTS (launchers)
     if launchShortcut(flags, key, eventIsKeyDown, appName, bundleID, e) then
-      -- launchShortcut already logs
+      -- launchShortcut already logs if DEBUG is true
       return true
     end
 
     -- 4. Check general SHORTCUTS
     for _, r in ipairs(SHORTCUTS) do
       if r.key and flagsEqual(flags, r.mods) and key == r.key then
-        local desc = r.description or
-        (table.concat(r.mods, "+") .. "+" .. r.key .. " -> " .. table.concat(r.sendMods, "+") .. "+" .. r.keyOut)
-        logKeyEvent(e, "remapTap: Remap (SHORTCUTS): " .. desc, appName, bundleID)
+        if DEBUG then
+          local desc = r.description or
+          (table.concat(r.mods, "+") .. "+" .. r.key .. " -> " .. table.concat(r.sendMods, "+") .. "+" .. r.keyOut)
+          logKeyEvent(e, "remapTap: Remap (SHORTCUTS): " .. desc, appName, bundleID)
+        end
         hs_eventtap.event.newKeyEvent(r.sendMods, r.keyOut, eventIsKeyDown):post()
         return true
       end
     end
 
-    logKeyEvent(e, "remapTap: No remap matched, passing through", appName, bundleID)
+    if DEBUG then logKeyEvent(e, "remapTap: No remap matched, passing through", appName, bundleID) end
     return false -- Pass through: No matching remap found
   end)
 
@@ -310,11 +312,11 @@ _G.myActiveTaps.scrollTap = hs_eventtap.new({ hs_eventtap.event.types.scrollWhee
   local appName = fa and fa:name() or "N/A"
   local bundleID = fa and fa:bundleID() or "nil"
 
-  keyEventsLogger:d("scrollTap Event Received. App: " .. appName .. " (" .. bundleID .. ")")
+  if DEBUG then keyEventsLogger:d("scrollTap Event Received. App: " .. appName .. " (" .. bundleID .. ")") end
 
   if isAppBlocked(REMAP_BLOCKED_APPS, bundleID) then
-    keyEventsLogger:d("scrollTap: Scroll in REMAP_BLOCKED_APP, passing through. App: " ..
-    appName .. " (" .. bundleID .. ")")
+    if DEBUG then keyEventsLogger:d("scrollTap: Scroll in REMAP_BLOCKED_APP, passing through. App: " ..
+      appName .. " (" .. bundleID .. ")") end
     return false
   end
 
@@ -326,11 +328,11 @@ _G.myActiveTaps.scrollTap = hs_eventtap.new({ hs_eventtap.event.types.scrollWhee
     if scrollDirection then
       for _, shortcut in ipairs(SHORTCUTS) do -- Using SHORTCUTS table for scroll definitions
         if shortcut.scroll and shortcut.scroll == scrollDirection and flagsEqual(flags, shortcut.mods or {}) then
-          keyEventsLogger:d("scrollTap: Scroll remap: Ctrl+Scroll" ..
-          scrollDirection ..
-          " -> " ..
-          table.concat(shortcut.sendMods, "+") ..
-          "+" .. shortcut.keyOut .. ". App: " .. appName .. " (" .. bundleID .. ")")
+          if DEBUG then keyEventsLogger:d("scrollTap: Scroll remap: Ctrl+Scroll" ..
+            scrollDirection ..
+            " -> " ..
+            table.concat(shortcut.sendMods, "+") ..
+            "+" .. shortcut.keyOut .. ". App: " .. appName .. " (" .. bundleID .. ")") end
           if shortcut.sendMods and shortcut.keyOut then
             hs_eventtap.keyStroke(shortcut.sendMods, shortcut.keyOut, 0) -- keyStroke for zoom is usually fine
           elseif shortcut.action then
@@ -342,7 +344,8 @@ _G.myActiveTaps.scrollTap = hs_eventtap.new({ hs_eventtap.event.types.scrollWhee
     end
   end
 
-  keyEventsLogger:d("scrollTap: No scroll remap matched, passing through. App: " .. appName .. " (" .. bundleID .. ")")
+  if DEBUG then keyEventsLogger:d("scrollTap: No scroll remap matched, passing through. App: " ..
+    appName .. " (" .. bundleID .. ")") end
   return false
 end)
 
@@ -359,12 +362,12 @@ if _G.myActiveTaps.appWatcher then _G.myActiveTaps.appWatcher:stop() end
 _G.myActiveTaps.appWatcher = hs_app.watcher.new(function(appName, eventType, appObject)
   if eventType == hs_app.watcher.activated then
     local bundleID = appObject and appObject:bundleID() or "N/A"
-    keyEventsLogger:d("AppWatcher: App activated: " .. appName .. " (" .. bundleID .. ")")
+    if DEBUG then keyEventsLogger:d("AppWatcher: App activated: " .. appName .. " (" .. bundleID .. ")") end
   end
 end)
 _G.myActiveTaps.appWatcher:start()
 
-hs_alert.show("Windows-like Remapping Active (v2.2 - Refined Logging)")
+hs_alert.show("Windows-like Remapping Active (v2.1 - Global Shortcuts)")
 
 ------------------------------------------------------------
 --  DIAGNOSTIC HOTKEY  ------------------------------------
