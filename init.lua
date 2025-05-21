@@ -72,10 +72,13 @@ local SHORTCUTS = {
   { mods = { "ctrl" },          key = "w",             sendMods = { "cmd" },          keyOut = "w" },
   { mods = { "ctrl" },          key = "return",        sendMods = { "cmd" },          keyOut = "return" },
   { mods = { "ctrl" },          key = "enter",         sendMods = { "cmd" },          keyOut = "return" }, -- 'enter' is often the same as 'return'
-  { mods = { "ctrl" },          key = "y",             sendMods = { "cmd", "shift" }, keyOut = "z" }, -- Redo
+  { mods = { "ctrl" },          key = "y",             sendMods = { "cmd", "shift" }, keyOut = "z" },      -- Redo
   { mods = { "ctrl" },          key = "forwarddelete", sendMods = { "alt" },          keyOut = "forwarddelete" },
   { mods = { "ctrl" },          key = "delete",        sendMods = { "alt" },          keyOut = "delete" },
   { mods = { "ctrl" },          key = "r",             sendMods = { "cmd" },          keyOut = "r" },
+
+  { mods = { "ctrl" },          key = "left",          sendMods = { "alt" },          keyOut = "left" },
+  { mods = { "ctrl" },          key = "right",         sendMods = { "alt" },          keyOut = "right" },
 
   { mods = { "ctrl", "shift" }, key = "r",             sendMods = { "cmd", "shift" }, keyOut = "r" },
   { mods = { "ctrl", "shift" }, key = "e",             sendMods = { "cmd", "alt" },   keyOut = "e" },
@@ -207,33 +210,33 @@ end)
 ------------------------------------------------------------
 if _G.myActiveTaps.mouseTap then _G.myActiveTaps.mouseTap:stop() end
 _G.myActiveTaps.mouseTap = hs_eventtap.new({
-    hs_eventtap.event.types.leftMouseDown, 
-    hs_eventtap.event.types.leftMouseUp,
-    hs_eventtap.event.types.leftMouseDragged
-  }, function(e)
-    local flags = e:getFlags()
-    
-    if flags.ctrl then
-      if DEBUG then
-        local fa = hs_app.frontmostApplication()
-        local appName = fa and fa:name() or "N/A"
-        local bundleID = fa and fa:bundleID() or "nil"
-        local eventType = e:getType()
-        local eventTypeStr = eventType == hs_eventtap.event.types.leftMouseDown and "leftMouseDown" or
-                             eventType == hs_eventtap.event.types.leftMouseUp and "leftMouseUp" or
-                             eventType == hs_eventtap.event.types.leftMouseDragged and "leftMouseDragged" or
-                             "unknown"
-        keyEventsLogger:d(string.format("mouseTap: Ctrl+Click intercepted (%s). App: %s (%s)", 
-                                         eventTypeStr, appName, bundleID))
-      end
-      
-      local copy = e:copy()
-      copy:setFlags({})  -- Remove all modifier flags
-      copy:post()
-      return true  -- Consume the original event
+  hs_eventtap.event.types.leftMouseDown,
+  hs_eventtap.event.types.leftMouseUp,
+  hs_eventtap.event.types.leftMouseDragged
+}, function(e)
+  local flags = e:getFlags()
+
+  if flags.ctrl then
+    if DEBUG then
+      local fa = hs_app.frontmostApplication()
+      local appName = fa and fa:name() or "N/A"
+      local bundleID = fa and fa:bundleID() or "nil"
+      local eventType = e:getType()
+      local eventTypeStr = eventType == hs_eventtap.event.types.leftMouseDown and "leftMouseDown" or
+          eventType == hs_eventtap.event.types.leftMouseUp and "leftMouseUp" or
+          eventType == hs_eventtap.event.types.leftMouseDragged and "leftMouseDragged" or
+          "unknown"
+      keyEventsLogger:d(string.format("mouseTap: Ctrl+Click intercepted (%s). App: %s (%s)",
+        eventTypeStr, appName, bundleID))
     end
-    
-    return false  -- Pass through all other mouse events
+
+    local copy = e:copy()
+    copy:setFlags({})   -- Remove all modifier flags
+    copy:post()
+    return true         -- Consume the original event
+  end
+
+  return false   -- Pass through all other mouse events
 end)
 
 ------------------------------------------------------------
