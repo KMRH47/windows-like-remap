@@ -7,6 +7,7 @@ local hs_hotkey = require "hs.hotkey"
 local hs_alert = require "hs.alert"
 local hs_fnutils = require "hs.fnutils"
 local hs_logger = require "hs.logger"
+local hs_mouse = require "hs.mouse"
 
 -- Ensure our global table for taps exists
 _G.myActiveTaps = _G.myActiveTaps or {}
@@ -88,6 +89,7 @@ local SHORTCUTS = {
   { mods = { "ctrl", "alt" },   key = "down",          sendMods = { "cmd" },          keyOut = "-" }, -- Example, might conflict with scroll
 
   { mods = { "ctrl", "shift" }, key = "b",             sendMods = { "cmd", "shift" }, keyOut = "b" },
+
 }
 
 -- app specific launchers
@@ -198,6 +200,40 @@ _G.myActiveTaps.altGrTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown }, 
     end
   end
   return false
+end)
+
+------------------------------------------------------------
+--  MOUSE HANDLING  ---------------------------------------
+------------------------------------------------------------
+if _G.myActiveTaps.mouseTap then _G.myActiveTaps.mouseTap:stop() end
+_G.myActiveTaps.mouseTap = hs_eventtap.new({
+    hs_eventtap.event.types.leftMouseDown, 
+    hs_eventtap.event.types.leftMouseUp,
+    hs_eventtap.event.types.leftMouseDragged
+  }, function(e)
+    local flags = e:getFlags()
+    
+    if flags.ctrl then
+      if DEBUG then
+        local fa = hs_app.frontmostApplication()
+        local appName = fa and fa:name() or "N/A"
+        local bundleID = fa and fa:bundleID() or "nil"
+        local eventType = e:getType()
+        local eventTypeStr = eventType == hs_eventtap.event.types.leftMouseDown and "leftMouseDown" or
+                             eventType == hs_eventtap.event.types.leftMouseUp and "leftMouseUp" or
+                             eventType == hs_eventtap.event.types.leftMouseDragged and "leftMouseDragged" or
+                             "unknown"
+        keyEventsLogger:d(string.format("mouseTap: Ctrl+Click intercepted (%s). App: %s (%s)", 
+                                         eventTypeStr, appName, bundleID))
+      end
+      
+      local copy = e:copy()
+      copy:setFlags({})  -- Remove all modifier flags
+      copy:post()
+      return true  -- Consume the original event
+    end
+    
+    return false  -- Pass through all other mouse events
 end)
 
 ------------------------------------------------------------
@@ -357,6 +393,7 @@ _G.myActiveTaps.remapTap:start()
 _G.myActiveTaps.scrollTap:start()
 _G.myActiveTaps.rightAltTap:start()
 _G.myActiveTaps.altGrTap:start()
+_G.myActiveTaps.mouseTap:start()
 
 if _G.myActiveTaps.appWatcher then _G.myActiveTaps.appWatcher:stop() end
 _G.myActiveTaps.appWatcher = hs_app.watcher.new(function(appName, eventType, appObject)
@@ -367,7 +404,7 @@ _G.myActiveTaps.appWatcher = hs_app.watcher.new(function(appName, eventType, app
 end)
 _G.myActiveTaps.appWatcher:start()
 
-hs_alert.show("Windows-like Remapping Active (v2.1 - Global Shortcuts)")
+hs_alert.show("Windows-like Remapping Active (v2.2 - Global Shortcuts & Mouse Support)")
 
 ------------------------------------------------------------
 --  DIAGNOSTIC HOTKEY  ------------------------------------
