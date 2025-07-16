@@ -37,22 +37,46 @@ local FULLSCREEN_BLOCKED_APPS = {
   ["com.apple.dt.Xcode"]     = true,
 }
 
+_G.minimizedStack = _G.minimizedStack or {}
+
+
 -- global shortcuts, checked first and bypass REMAP_BLOCKED_APPS
 local GLOBAL_SHORTCUTS = {
+  ------------------------------------------------------------
+  -- minimise (Cmd‑Shift‑Down)
+  ------------------------------------------------------------
   {
-    mods = { "cmd", "shift" },
-    key = "down",
-    action = function(event, eventIsKeyDown, appName, bundleID)
-      if eventIsKeyDown then -- Only act on key down
-        if DEBUG then
-          logKeyEvent(event, "remapTap: GLOBAL Action: Minimize Window (Cmd+Shift+Down -> Cmd+M)", appName,
-            bundleID)
-        end
-        hs_eventtap.keyStroke({ "cmd" }, "m", 0)
-      end
-      -- The event is consumed by returning true in the main remapTap loop after this action is called.
+    mods = { "cmd", "shift" }, key = "down",
+    action = function(_, isDown)
+      if not isDown then return end
+      local w = hs.window.frontmostWindow()
+      if not w then return end
+      table.insert(_G.minimizedStack, w:id())   -- push id
+      w:minimize()
     end,
-    description = "Minimize Window (Cmd+Shift+Down -> Cmd+M)"
+    description = "Minimise window",
+  },
+
+  ------------------------------------------------------------
+  -- restore last minimised (Cmd‑Shift‑Up)
+  ------------------------------------------------------------
+  {
+    mods = { "cmd", "shift" }, key = "up",
+    action = function(_, isDown)
+      if not isDown then return end
+      local stack = _G.minimizedStack
+      while #stack > 0 do
+        local id  = table.remove(stack)         -- pop
+        local win = hs.window.get(id)
+        if win and win:isMinimized() then
+          win:unminimize()
+          win:focus()
+          return
+        end                                    -- else continue
+      end
+      hs.alert.show("No minimised windows")
+    end,
+    description = "Restore last minimised window",
   },
 }
 
