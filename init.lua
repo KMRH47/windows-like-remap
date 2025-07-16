@@ -37,48 +37,76 @@ local FULLSCREEN_BLOCKED_APPS = {
   ["com.apple.dt.Xcode"]     = true,
 }
 
-_G.minimizedStack = _G.minimizedStack or {}
+------------------------------------------------------------
+--  GLOBAL_SHORTCUTS
+------------------------------------------------------------
+_G.minimizedStack = _G.minimizedStack or {}       -- keep only one copy
 
-
--- global shortcuts, checked first and bypass REMAP_BLOCKED_APPS
 local GLOBAL_SHORTCUTS = {
-  ------------------------------------------------------------
-  -- minimise (Cmd‑Shift‑Down)
-  ------------------------------------------------------------
+-- Cmd‑Shift‑Down  → minimise front window, reveal first other‑app window
   {
-    mods = { "cmd", "shift" }, key = "down",
+    mods   = { "cmd", "shift" },
+    key    = "down",
     action = function(_, isDown)
       if not isDown then return end
-      local w = hs.window.frontmostWindow()
-      if not w then return end
-      table.insert(_G.minimizedStack, w:id())   -- push id
-      w:minimize()
+    
+      local front = hs.window.frontmostWindow()
+      if not front then return end
+      local frontApp = front:application():bundleID()
+    
+      -- find the first non‑minimised window from *another* app
+      local fallback = nil
+      for _, w in ipairs(hs.window.orderedWindows()) do
+        if w:id() ~= front:id()
+           and not w:isMinimized()
+           and (w:application():bundleID() ~= frontApp) then
+          fallback = w
+          break
+        end
+      end
+    
+      -- push to stack and minimise
+      _G.minimizedStack = _G.minimizedStack or {}
+      table.insert(_G.minimizedStack, front:id())
+      front:minimize()
+    
+      -- after the system finishes its own focus shuffle (~0.25 s), bring fallback forward
+      if fallback then
+        hs.timer.doAfter(0.3, function()
+          if fallback and not fallback:isMinimized() then
+            fallback:focus()
+          end
+        end)
+      end
     end,
-    description = "Minimise window",
+    description = "Minimise window and reveal first other‑app window behind",
   },
 
-  ------------------------------------------------------------
-  -- restore last minimised (Cmd‑Shift‑Up)
-  ------------------------------------------------------------
+  -------- restore (Cmd-Shift-Up) --------------------------
   {
-    mods = { "cmd", "shift" }, key = "up",
+    mods  = { "cmd", "shift" },
+    key   = "up",
     action = function(_, isDown)
       if not isDown then return end
-      local stack = _G.minimizedStack
-      while #stack > 0 do
-        local id  = table.remove(stack)         -- pop
+
+      while #_G.minimizedStack > 0 do
+        local id  = table.remove(_G.minimizedStack)   -- pop
         local win = hs.window.get(id)
         if win and win:isMinimized() then
           win:unminimize()
           win:focus()
           return
-        end                                    -- else continue
+        end
+        -- if win no longer exists or was restored some other way, keep popping
       end
+
       hs.alert.show("No minimised windows")
     end,
-    description = "Restore last minimised window",
+    description = "Restore most-recent minimised window",
   },
-}
+
+}  -- <<<--- keep this closing brace, nothing after it
+
 
 -- declarative shortcut map (general remaps)
 local SHORTCUTS = {
