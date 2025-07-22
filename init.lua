@@ -484,3 +484,16 @@ hs_hotkey.bind({ "cmd", "alt", "ctrl" }, "T", function()
   print("-----------------------")
   hs_alert.show(string.format("Diag: %s (%s)", appName, bundleID))
 end)
+
+
+-- Special handling for keypad Enter (keyCode 76) + Ctrl → Cmd+Return
+if _G.myActiveTaps.keypadEnterRemap then _G.myActiveTaps.keypadEnterRemap:stop() end
+_G.myActiveTaps.keypadEnterRemap = hs_eventtap.new({ hs.eventtap.event.types.keyDown, hs.eventtap.event.types.keyUp }, function(e)
+  local isDown = e:getType() == hs.eventtap.event.types.keyDown
+  if e:getKeyCode() == 76 and e:getFlags():containExactly({ "ctrl" }) then
+    hs_eventtap.event.newKeyEvent({ "cmd" }, "return", isDown):post()
+    return true
+  end
+  return false
+end)
+_G.myActiveTaps.keypadEnterRemap:start()
