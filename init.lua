@@ -24,7 +24,8 @@ local REMAP_BLOCKED_APPS = {
   ["com.jetbrains.datagrip"]  = true,
   ["com.jetbrains.clion"]     = true,
   ["com.jetbrains.rustrover"] = true,
-  ["com.microsoft.VSCode"]    = true,
+  ["com.microsoft.VSCode"]    = true, 
+  ["com.todesktop.230313mzl4w4u92"]    = true,
 }
 
 -- apps where we want to block Ctrl+Cmd+F (fullscreen)  (BUNDLE-IDs)
@@ -218,21 +219,21 @@ end
 ------------------------------------------------------------
 --  GLOBALS FOR KEYTRACKING  -------------------------------
 ------------------------------------------------------------
-local rightAltDown = false
+_G.rightAltDown = false
 
 if _G.myActiveTaps.rightAltTap then _G.myActiveTaps.rightAltTap:stop() end
 _G.myActiveTaps.rightAltTap = hs_eventtap.new({ hs_eventtap.event.types.flagsChanged }, function(e)
   local kc = e:getKeyCode()
   if kc == 61 then -- right_option
-    rightAltDown = e:getFlags().alt
-    if DEBUG then keyEventsLogger:d("Right Alt (Key 61) state changed. rightAltDown: " .. tostring(rightAltDown)) end
+    _G.rightAltDown = e:getFlags().alt
+    if DEBUG then keyEventsLogger:d("Right Alt (Key 61) state changed. rightAltDown: " .. tostring(_G.rightAltDown)) end
   end
   return false -- Do not consume the event
 end)
 
 if _G.myActiveTaps.altGrTap then _G.myActiveTaps.altGrTap:stop() end
 _G.myActiveTaps.altGrTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown }, function(e)
-  if not rightAltDown then return false end
+  if not _G.rightAltDown then return false end
 
   local fa = hs_app.frontmostApplication()
   local appName = fa and fa:name() or "N/A"
@@ -327,6 +328,28 @@ _G.myActiveTaps.remapTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown, hs
     local keyCode = e:getKeyCode()
     local eventIsKeyDown = (e:getType() == hs_eventtap.event.types.keyDown)
     local key = hs_keycodes.map[keyCode] -- Mapped key string, e.g., "a", "return", "left"
+
+    -- AltGr + Return → context click at mouse, preserve selection
+    _G.altGrReturnArmed = _G.altGrReturnArmed or false
+      
+    if keyCode == 36 then -- Return
+      if eventIsKeyDown and _G.rightAltDown then
+        _G.altGrReturnArmed = true
+        return true -- swallow keyDown
+      elseif (e:getType() == hs.eventtap.event.types.keyUp) and _G.altGrReturnArmed then
+        _G.altGrReturnArmed = false
+        local pos = hs_mouse.getAbsolutePosition()
+        hs.timer.doAfter(0.03, function()
+          local down = hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.rightMouseDown, pos)
+          down:setFlags({}) -- ensure no modifiers on the click
+          down:post()
+          local up = hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.rightMouseUp, pos)
+          up:setFlags({})
+          up:post()
+        end)
+        return true
+      end
+    end
 
     -- 1. Check GLOBAL_SHORTCUTS first
     if key then -- Only proceed if key is mapped for key-based shortcuts
