@@ -14,18 +14,19 @@ _G.myActiveTaps = _G.myActiveTaps or {}
 
 -- apps where we *never* want Ctrl→Cmd remaps  (BUNDLE-IDs)
 local REMAP_BLOCKED_APPS = {
-  ["com.apple.Terminal"]      = true,
-  ["com.googlecode.iterm2"]   = true,
-  ["com.jetbrains.intellij"]  = true,
-  ["com.jetbrains.goland"]    = true,
-  ["com.jetbrains.pycharm"]   = true,
-  ["com.jetbrains.rider"]     = true,
-  ["com.jetbrains.WebStorm"]  = true,
-  ["com.jetbrains.datagrip"]  = true,
-  ["com.jetbrains.clion"]     = true,
-  ["com.jetbrains.rustrover"] = true,
-  ["com.microsoft.VSCode"]    = true, 
-  ["com.todesktop.230313mzl4w4u92"]    = true,
+  ["net.kovidgoyal.kitty"]          = true,
+  ["com.apple.Terminal"]            = true,
+  ["com.googlecode.iterm2"]         = true,
+  ["com.jetbrains.intellij"]        = true,
+  ["com.jetbrains.goland"]          = true,
+  ["com.jetbrains.pycharm"]         = true,
+  ["com.jetbrains.rider"]           = true,
+  ["com.jetbrains.WebStorm"]        = true,
+  ["com.jetbrains.datagrip"]        = true,
+  ["com.jetbrains.clion"]           = true,
+  ["com.jetbrains.rustrover"]       = true,
+  ["com.microsoft.VSCode"]          = true,
+  ["com.todesktop.230313mzl4w4u92"] = true,
 }
 
 -- apps where we want to block Ctrl+Cmd+F (fullscreen)  (BUNDLE-IDs)
@@ -38,39 +39,78 @@ local FULLSCREEN_BLOCKED_APPS = {
   ["com.apple.dt.Xcode"]     = true,
 }
 
+-- ===== FAST Kitty-only Ctrl+C / Ctrl+V remap (no lag) =====
+-- Replace your kittyTap block with this:
+
+local kittyBundle = "net.kovidgoyal.kitty"
+
+if _G.kittyFastTap then _G.kittyFastTap:stop() end
+_G.kittyFastTap = hs.eventtap.new(
+  { hs.eventtap.event.types.keyDown, hs.eventtap.event.types.keyUp },
+  function(e)
+    local app = hs.application.frontmostApplication()
+    if not app or app:bundleID() ~= kittyBundle then
+      return false -- not Kitty -> pass through
+    end
+
+    local isDown = (e:getType() == hs.eventtap.event.types.keyDown)
+    local flags  = e:getFlags()
+    local key    = hs.keycodes.map[e:getKeyCode()]
+
+    -- Only Ctrl (no cmd/alt/shift)
+    local onlyCtrl = flags.ctrl and not (flags.cmd or flags.alt or flags.shift)
+
+    -- Ctrl+C -> Cmd+C (copy)
+    if onlyCtrl and key == "c" then
+      hs.eventtap.event.newKeyEvent({ "cmd" }, "c", isDown):post()
+      return true
+    end
+
+    -- Ctrl+V -> Cmd+V (paste)
+    if onlyCtrl and key == "v" then
+      hs.eventtap.event.newKeyEvent({ "cmd" }, "v", isDown):post()
+      return true
+    end
+
+    return false
+  end
+)
+_G.kittyFastTap:start()
+
+
 ------------------------------------------------------------
 --  GLOBAL_SHORTCUTS
 ------------------------------------------------------------
-_G.minimizedStack = _G.minimizedStack or {}       -- keep only one copy
+_G.minimizedStack = _G.minimizedStack or {} -- keep only one copy
 
 local GLOBAL_SHORTCUTS = {
--- Cmd‑Shift‑Down  → minimise front window, reveal first other‑app window
+  -- Cmd‑Shift‑Down  → minimise front window, reveal first other‑app window
   {
-    mods   = { "cmd", "shift" },
-    key    = "down",
-    action = function(_, isDown)
+    mods        = { "cmd", "shift" },
+    key         = "down",
+    action      = function(_, isDown)
       if not isDown then return end
-    
+
       local front = hs.window.frontmostWindow()
       if not front then return end
       local frontApp = front:application():bundleID()
-    
+
       -- find the first non‑minimised window from *another* app
       local fallback = nil
       for _, w in ipairs(hs.window.orderedWindows()) do
         if w:id() ~= front:id()
-           and not w:isMinimized()
-           and (w:application():bundleID() ~= frontApp) then
+            and not w:isMinimized()
+            and (w:application():bundleID() ~= frontApp) then
           fallback = w
           break
         end
       end
-    
+
       -- push to stack and minimise
       _G.minimizedStack = _G.minimizedStack or {}
       table.insert(_G.minimizedStack, front:id())
       front:minimize()
-    
+
       -- after the system finishes its own focus shuffle (~0.25 s), bring fallback forward
       if fallback then
         hs.timer.doAfter(0.3, function()
@@ -85,13 +125,13 @@ local GLOBAL_SHORTCUTS = {
 
   -------- restore (Cmd-Shift-Up) --------------------------
   {
-    mods  = { "cmd", "shift" },
-    key   = "up",
-    action = function(_, isDown)
+    mods        = { "cmd", "shift" },
+    key         = "up",
+    action      = function(_, isDown)
       if not isDown then return end
 
       while #_G.minimizedStack > 0 do
-        local id  = table.remove(_G.minimizedStack)   -- pop
+        local id  = table.remove(_G.minimizedStack) -- pop
         local win = hs.window.get(id)
         if win and win:isMinimized() then
           win:unminimize()
@@ -106,7 +146,7 @@ local GLOBAL_SHORTCUTS = {
     description = "Restore most-recent minimised window",
   },
 
-}  -- <<<--- keep this closing brace, nothing after it
+} -- <<<--- keep this closing brace, nothing after it
 
 
 -- declarative shortcut map (general remaps)
@@ -284,12 +324,12 @@ _G.myActiveTaps.mouseTap = hs_eventtap.new({
     end
 
     local copy = e:copy()
-    copy:setFlags({})   -- Remove all modifier flags
+    copy:setFlags({}) -- Remove all modifier flags
     copy:post()
-    return true         -- Consume the original event
+    return true       -- Consume the original event
   end
 
-  return false   -- Pass through all other mouse events
+  return false -- Pass through all other mouse events
 end)
 
 ------------------------------------------------------------
@@ -331,25 +371,7 @@ _G.myActiveTaps.remapTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown, hs
 
     -- AltGr + Return → context click at mouse, preserve selection
     _G.altGrReturnArmed = _G.altGrReturnArmed or false
-      
-    if keyCode == 36 then -- Return
-      if eventIsKeyDown and _G.rightAltDown then
-        _G.altGrReturnArmed = true
-        return true -- swallow keyDown
-      elseif (e:getType() == hs.eventtap.event.types.keyUp) and _G.altGrReturnArmed then
-        _G.altGrReturnArmed = false
-        local pos = hs_mouse.getAbsolutePosition()
-        hs.timer.doAfter(0.03, function()
-          local down = hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.rightMouseDown, pos)
-          down:setFlags({}) -- ensure no modifiers on the click
-          down:post()
-          local up = hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.rightMouseUp, pos)
-          up:setFlags({})
-          up:post()
-        end)
-        return true
-      end
-    end
+
 
     -- 1. Check GLOBAL_SHORTCUTS first
     if key then -- Only proceed if key is mapped for key-based shortcuts
@@ -511,12 +533,13 @@ end)
 
 -- Special handling for keypad Enter (keyCode 76) + Ctrl → Cmd+Return
 if _G.myActiveTaps.keypadEnterRemap then _G.myActiveTaps.keypadEnterRemap:stop() end
-_G.myActiveTaps.keypadEnterRemap = hs_eventtap.new({ hs.eventtap.event.types.keyDown, hs.eventtap.event.types.keyUp }, function(e)
-  local isDown = e:getType() == hs.eventtap.event.types.keyDown
-  if e:getKeyCode() == 76 and e:getFlags():containExactly({ "ctrl" }) then
-    hs_eventtap.event.newKeyEvent({ "cmd" }, "return", isDown):post()
-    return true
-  end
-  return false
-end)
+_G.myActiveTaps.keypadEnterRemap = hs_eventtap.new({ hs.eventtap.event.types.keyDown, hs.eventtap.event.types.keyUp },
+  function(e)
+    local isDown = e:getType() == hs.eventtap.event.types.keyDown
+    if e:getKeyCode() == 76 and e:getFlags():containExactly({ "ctrl" }) then
+      hs_eventtap.event.newKeyEvent({ "cmd" }, "return", isDown):post()
+      return true
+    end
+    return false
+  end)
 _G.myActiveTaps.keypadEnterRemap:start()
