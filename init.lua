@@ -145,7 +145,6 @@ local GLOBAL_SHORTCUTS = {
     end,
     description = "Restore most-recent minimised window",
   },
-
 } -- <<<--- keep this closing brace, nothing after it
 
 
@@ -197,7 +196,7 @@ local APP_SHORTCUTS = {
 ------------------------------------------------------------
 --  DEBUG LOGGER  -----------------------------------------
 ------------------------------------------------------------
-local DEBUG = true -- IMPORTANT: Keep true for now (as per your comment)
+local DEBUG = false -- Set to true only when troubleshooting
 local keyEventsLogger = hs_logger.new('keyEvents', 'debug')
 
 local function logKeyEvent(e, message, appName, bundleID)
@@ -263,12 +262,10 @@ _G.rightAltDown = false
 
 if _G.myActiveTaps.rightAltTap then _G.myActiveTaps.rightAltTap:stop() end
 _G.myActiveTaps.rightAltTap = hs_eventtap.new({ hs_eventtap.event.types.flagsChanged }, function(e)
-  local kc = e:getKeyCode()
-  if kc == 61 then -- right_option
+  if e:getKeyCode() == 61 then -- right_option
     _G.rightAltDown = e:getFlags().alt
-    if DEBUG then keyEventsLogger:d("Right Alt (Key 61) state changed. rightAltDown: " .. tostring(_G.rightAltDown)) end
   end
-  return false -- Do not consume the event
+  return false
 end)
 
 if _G.myActiveTaps.altGrTap then _G.myActiveTaps.altGrTap:stop() end
@@ -299,38 +296,45 @@ _G.myActiveTaps.altGrTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown }, 
 end)
 
 ------------------------------------------------------------
---  MOUSE HANDLING  ---------------------------------------
+--  MOUSE HANDLING  — left Ctrl click becomes Cmd click
 ------------------------------------------------------------
-if _G.myActiveTaps.mouseTap then _G.myActiveTaps.mouseTap:stop() end
-_G.myActiveTaps.mouseTap = hs_eventtap.new({
-  hs_eventtap.event.types.leftMouseDown,
-  hs_eventtap.event.types.leftMouseUp,
-  hs_eventtap.event.types.leftMouseDragged
-}, function(e)
-  local flags = e:getFlags()
+_G.leftCtrlDown  = _G.leftCtrlDown  or false
+_G.rightCtrlDown = _G.rightCtrlDown or false
 
-  if flags.ctrl then
-    if DEBUG then
-      local fa = hs_app.frontmostApplication()
-      local appName = fa and fa:name() or "N/A"
-      local bundleID = fa and fa:bundleID() or "nil"
-      local eventType = e:getType()
-      local eventTypeStr = eventType == hs_eventtap.event.types.leftMouseDown and "leftMouseDown" or
-          eventType == hs_eventtap.event.types.leftMouseUp and "leftMouseUp" or
-          eventType == hs_eventtap.event.types.leftMouseDragged and "leftMouseDragged" or
-          "unknown"
-      keyEventsLogger:d(string.format("mouseTap: Ctrl+Click intercepted (%s). App: %s (%s)",
-        eventTypeStr, appName, bundleID))
-    end
-
-    local copy = e:copy()
-    copy:setFlags({}) -- Remove all modifier flags
-    copy:post()
-    return true       -- Consume the original event
+-- Track left vs right Ctrl keys explicitly, plus fn/globe key
+if _G.myActiveTaps.ctrlSideTap then _G.myActiveTaps.ctrlSideTap:stop() end
+_G.myActiveTaps.ctrlSideTap = hs.eventtap.new({ hs.eventtap.event.types.flagsChanged }, function(e)
+  local kc = e:getKeyCode()
+  if kc == 59 then -- left control
+    _G.leftCtrlDown = e:getFlags().ctrl
+  elseif kc == 62 then -- right control (also fn/globe key when mapped to Control)
+    _G.rightCtrlDown = e:getFlags().ctrl
+  elseif kc == 63 then -- fn key (globe key on some Macs when mapped to Control)
+    _G.leftCtrlDown = e:getFlags().ctrl
   end
-
-  return false -- Pass through all other mouse events
+  return false
 end)
+_G.myActiveTaps.ctrlSideTap:start()
+
+-- Convert Ctrl + left click to Cmd + left click (works with both left and right Ctrl)
+if _G.myActiveTaps.mouseTap then _G.myActiveTaps.mouseTap:stop() end
+_G.myActiveTaps.mouseTap = hs.eventtap.new({
+  hs.eventtap.event.types.leftMouseDown,
+  hs.eventtap.event.types.leftMouseUp,
+  hs.eventtap.event.types.leftMouseDragged
+}, function(e)
+  -- Rewrite when the user is holding either left OR right Ctrl
+  if (_G.leftCtrlDown or _G.rightCtrlDown) and e:getFlags().ctrl then
+    local copy = e:copy()
+    copy:setFlags({ cmd = true })
+    copy:post()
+    return true
+  end
+  return false
+end)
+_G.myActiveTaps.mouseTap:start()
+
+
 
 ------------------------------------------------------------
 --  FULLSCREEN BLOCKER ------------------------------------
@@ -371,7 +375,6 @@ _G.myActiveTaps.remapTap = hs_eventtap.new({ hs_eventtap.event.types.keyDown, hs
 
     -- AltGr + Return → context click at mouse, preserve selection
     _G.altGrReturnArmed = _G.altGrReturnArmed or false
-
 
     -- 1. Check GLOBAL_SHORTCUTS first
     if key then -- Only proceed if key is mapped for key-based shortcuts
@@ -530,6 +533,8 @@ hs_hotkey.bind({ "cmd", "alt", "ctrl" }, "T", function()
   hs_alert.show(string.format("Diag: %s (%s)", appName, bundleID))
 end)
 
+-- Flameshot: Cmd+Shift+S triggers capture
+
 
 -- Special handling for keypad Enter (keyCode 76) + Ctrl → Cmd+Return
 if _G.myActiveTaps.keypadEnterRemap then _G.myActiveTaps.keypadEnterRemap:stop() end
@@ -543,3 +548,4 @@ _G.myActiveTaps.keypadEnterRemap = hs_eventtap.new({ hs.eventtap.event.types.key
     return false
   end)
 _G.myActiveTaps.keypadEnterRemap:start()
+
