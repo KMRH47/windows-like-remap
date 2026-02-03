@@ -1124,7 +1124,7 @@ do
     -- BUNDLE CREATION (minimal .app with shell script executable)
     ----------------------------------------------------------------------
 
-    local function makeBundle(name, url, browser)
+    local function makeBundle(name, url, browser, appToLaunch)
       local appPath  = appDir .. name .. ".app"
       local contents = appPath .. "/Contents"
       local macOSDir = contents .. "/MacOS"
@@ -1134,12 +1134,10 @@ do
       local exeName = "run"
       local exePath = macOSDir .. "/" .. exeName
 
-      -- tiny helper for double-quote escaping in the script
       local function dq(s)
         return (s or ""):gsub('"', '\\"')
       end
 
-      -- launcher script: open URL, optionally in specific browser
       local f = io.open(exePath, "w")
       if not f then
         print("[quicklinks] Failed to write launcher for", name)
@@ -1148,58 +1146,61 @@ do
 
       f:write("#!/bin/bash\n")
       f:write("set -e\n")
-      f:write('URL="' .. dq(url) .. '"\n')
-      f:write('BID=""\n')
-      f:write('APPNAME=""\n')
 
-      if browser and browser ~= "" then
-        f:write('BROWSER="' .. dq(browser) .. '"\n')
-        f:write('if [[ "$BROWSER" == *.*.* ]]; then\n')
-        f:write('  BID="$BROWSER"\n')
-        f:write('  open -b "$BID" "$URL"\n')
-        f:write('else\n')
-        f:write('  APPNAME="$BROWSER"\n')
-        f:write('  open -a "$APPNAME" "$URL"\n')
-        f:write('fi\n')
-      else
-        -- resolve default browser bundle id for https/http
-        f:write(
-          'BID="$(plutil -convert json -o - "$HOME/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist" 2>/dev/null \\\n')
-        f:write(' | /usr/bin/python3 - <<\'PY\'\n')
-        f:write('import json,sys\n')
-        f:write('data=json.load(sys.stdin)\n')
-        f:write('handlers=data.get("LSHandlers",[])\n')
-        f:write('def pick(s):\n')
-        f:write('  for h in handlers:\n')
-        f:write('    if h.get("LSHandlerURLScheme")==s:\n')
-        f:write('      return h.get("LSHandlerRoleAll") or h.get("LSHandlerRoleViewer")\n')
-        f:write('  return None\n')
-        f:write('print(pick("https") or pick("http") or "")\n')
-        f:write('PY\n')
-        f:write(')"\n')
+      if appToLaunch and appToLaunch ~= "" then
+        f:write('open "' .. dq(appToLaunch) .. '"\n')
+      elseif url and url ~= "" then
+        f:write('URL="' .. dq(url) .. '"\n')
+        f:write('BID=""\n')
+        f:write('APPNAME=""\n')
+
+        if browser and browser ~= "" then
+          f:write('BROWSER="' .. dq(browser) .. '"\n')
+          f:write('if [[ "$BROWSER" == *.*.* ]]; then\n')
+          f:write('  BID="$BROWSER"\n')
+          f:write('  open -b "$BID" "$URL"\n')
+          f:write('else\n')
+          f:write('  APPNAME="$BROWSER"\n')
+          f:write('  open -a "$APPNAME" "$URL"\n')
+          f:write('fi\n')
+        else
+          f:write(
+            'BID="$(plutil -convert json -o - "$HOME/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist" 2>/dev/null \\\n')
+          f:write(' | /usr/bin/python3 - <<\'PY\'\n')
+          f:write('import json,sys\n')
+          f:write('data=json.load(sys.stdin)\n')
+          f:write('handlers=data.get("LSHandlers",[])\n')
+          f:write('def pick(s):\n')
+          f:write('  for h in handlers:\n')
+          f:write('    if h.get("LSHandlerURLScheme")==s:\n')
+          f:write('      return h.get("LSHandlerRoleAll") or h.get("LSHandlerRoleViewer")\n')
+          f:write('  return None\n')
+          f:write('print(pick("https") or pick("http") or "")\n')
+          f:write('PY\n')
+          f:write(')"\n')
+          f:write('if [[ -n "$BID" ]]; then\n')
+          f:write('  open -b "$BID" "$URL"\n')
+          f:write('else\n')
+          f:write('  open "$URL"\n')
+          f:write('fi\n')
+        end
+
+        f:write('sleep 0.05\n')
         f:write('if [[ -n "$BID" ]]; then\n')
-        f:write('  open -b "$BID" "$URL"\n')
-        f:write('else\n')
-        f:write('  open "$URL"\n')
+        f:write('  osascript <<EOF >/dev/null 2>&1\n')
+        f:write('tell application id "$BID" to activate\n')
+        f:write('tell application "System Events"\n')
+        f:write('  set p to first process whose bundle identifier is "$BID"\n')
+        f:write('  set frontmost of p to true\n')
+        f:write('end tell\n')
+        f:write('EOF\n')
+        f:write('elif [[ -n "$APPNAME" ]]; then\n')
+        f:write('  osascript <<EOF >/dev/null 2>&1\n')
+        f:write('tell application "$APPNAME" to activate\n')
+        f:write('tell application "System Events" to set frontmost of process "$APPNAME" to true\n')
+        f:write('EOF\n')
         f:write('fi\n')
       end
-
-      -- force focus
-      f:write('sleep 0.05\n')
-      f:write('if [[ -n "$BID" ]]; then\n')
-      f:write('  osascript <<EOF >/dev/null 2>&1\n')
-      f:write('tell application id "$BID" to activate\n')
-      f:write('tell application "System Events"\n')
-      f:write('  set p to first process whose bundle identifier is "$BID"\n')
-      f:write('  set frontmost of p to true\n')
-      f:write('end tell\n')
-      f:write('EOF\n')
-      f:write('elif [[ -n "$APPNAME" ]]; then\n')
-      f:write('  osascript <<EOF >/dev/null 2>&1\n')
-      f:write('tell application "$APPNAME" to activate\n')
-      f:write('tell application "System Events" to set frontmost of process "$APPNAME" to true\n')
-      f:write('EOF\n')
-      f:write('fi\n')
 
       f:close()
 
@@ -1251,11 +1252,13 @@ do
       local url
       local browser
       local iconOverride
+      local appToLaunch
 
       if type(entry) == "table" then
         url          = entry.url
         browser      = entry.browser
         iconOverride = entry.icon
+        appToLaunch  = entry.app
       elseif type(entry) == "string" then
         url = entry
       else
@@ -1263,8 +1266,8 @@ do
         goto continue
       end
 
-      if url and url ~= "" then
-        local appPath = makeBundle(name, url, browser)
+      if (url and url ~= "") or (appToLaunch and appToLaunch ~= "") then
+        local appPath = makeBundle(name, url, browser, appToLaunch)
         if appPath then
           enqueueIconJob(appPath, url, iconOverride)
           startIconWorkerIfNeeded()
