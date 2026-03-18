@@ -30,4 +30,4 @@ Edit `init.lua` to customize shortcuts, app-specific behavior, or enable debug l
 
 ## License
 
-MIT
+PolyForm Noncommercial 1.0.0
