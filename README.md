@@ -1,32 +1,21 @@
 # Windows-like Remap
 
-Hammerspoon configuration to make macOS keyboard shortcuts feel like Windows.
+A [Hammerspoon](https://www.hammerspoon.org/) configuration that makes macOS keyboard shortcuts feel like Windows.
 
-## Features
+## Quick start
 
-- Ctrl → Cmd remapping for common shortcuts (copy, paste, save, etc.)
-- Fullscreen suppression for selected apps
-- AltGr fixes for consistent symbol input
-- Scroll-to-zoom support (Ctrl + Scroll)
-- App-specific remap blocking via bundle ID
-- Diagnostic hotkey (Cmd+Alt+Ctrl+T) shows active remap state
+Install Hammerspoon, then symlink `init.lua`:
 
-## Installation
+```bash
+git clone https://github.com/qol-tools/windows-like-remap
+ln -s "$PWD/windows-like-remap/init.lua" ~/.hammerspoon/init.lua
+```
 
-1. Install [Hammerspoon](https://www.hammerspoon.org/)
-2. Clone this repo:
-   ```bash
-   git clone https://github.com/qol-tools/windows-like-remap.git
-   ```
-3. Symlink the config file:
-   ```bash
-   ln -s /path/to/windows-like-remap/init.lua ~/.hammerspoon/init.lua
-   ```
-4. Reload Hammerspoon and grant accessibility permissions
+Reload Hammerspoon and grant accessibility permissions. Edit `init.lua` to customise.
 
-## Customization
+## About
 
-Edit `init.lua` to customize shortcuts, app-specific behavior, or enable debug logging with `DEBUG = true`.
+Remaps Ctrl to Cmd for common shortcuts, suppresses fullscreen on selected apps, fixes AltGr symbol input, adds Ctrl+Scroll to zoom, and supports per-app remap blocking by bundle ID. Press Cmd+Alt+Ctrl+T to inspect active remap state.
 
 ## License
 
